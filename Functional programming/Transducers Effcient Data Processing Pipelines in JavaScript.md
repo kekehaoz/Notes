@@ -182,19 +182,61 @@ Remember this rule: When called with no arguments, a reducer should always retur
 
 #### Early Termination
 
-It's possible to signal to other transducers in the pipeline that we're done reducing, and they should not expect to process any more values. Upon seeing a `reduced` value, other transducers may decide to stop adding to the collection, and the transducing process(as controlled by the final step())
+It's possible to signal to other transducers in the pipeline that we're done reducing, and they should not expect to process any more values. Upon seeing a `reduced` value, other transducers may decide to stop adding to the collection, and the transducing process(as controlled by the final step() function) may decide to stop enumerating over values.
 
 
+
+```javascript
+const reduced = v => ({
+  get is Reduced() {
+    return true;
+  },
+  valueOf: () => v,
+  toString: () => `Reduced(${ JSON.stringify(v) })`
+});
+```
+
+
+
+```javascript
+import { compose, filter, map, into } from 'ramada';
+
+const isEven = n => n % 2 === 0;
+const double = n => n * 2;
+
+const doubleEvents = compose(
+	filter(isEven),
+	map(double)
+);
+
+const arr = [1,2,3,4,5,6];
+
+const result = into([], doubleEvens, arr);
+
+console.log(result); // [4, 8, 12]
+```
 
 
 
 ​         
 
+### Transducing
 
+It's possible to transduce over lots of different types of data, but the process can be generalized:
 
+```typescript
+import curry = (
+	f, arr = []
+) => (...args) => (
+	a => a.length === f.length ?
+  	f(...a) :
+  	curry(f, a)
+)([...arr, ...args]);
 
-
-
+const transduce = curry((step, initial, xform, foldable) =>
+	foldable.reduce(xform(step), initial)
+);
+```
 
 
 
